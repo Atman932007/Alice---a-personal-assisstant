@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ALICE</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #00f5ff;
+    --cyan-dim: #00b8c4;
+    --cyan-glow: rgba(0, 245, 255, 0.15);
+    --bg: #020810;
+    --bg2: #050e1a;
+    --panel: rgba(0, 245, 255, 0.04);
+    --border: rgba(0, 245, 255, 0.2);
+    --text: #c8f0f5;
+    --text-dim: #4a7a85;
+    --red: #ff3366;
+    --green: #00ff88;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .header {
+    text-align: center;
+    padding: 20px 0 16px;
+    position: relative;
+  }
+
+  .header-line {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 12px;
+    color: var(--cyan);
+    text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,245,255,0.4), 0 0 80px rgba(0,245,255,0.2);
+    animation: pulse-logo 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-logo {
+    0%, 100% { text-shadow: 0 0 20px var(--cyan), 0 0 40px rgba(0,245,255,0.4); }
+    50% { text-shadow: 0 0 30px var(--cyan), 0 0 60px rgba(0,245,255,0.6), 0 0 100px rgba(0,245,255,0.3); }
+  }
+
+  .subtitle {
+    font-size: 11px;
+    letter-spacing: 6px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0 16px;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  .status-dot.thinking {
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    animation: blink-fast 0.5s ease-in-out infinite;
+  }
+
+  .status-dot.speaking {
+    background: #aa00ff;
+    box-shadow: 0 0 8px #aa00ff;
+    animation: blink-fast 0.4s ease-in-out infinite;
+  }
+
+  .status-dot.error {
+    background: var(--red);
+    box-shadow: 0 0 8px var(--red);
+    animation: none;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  @keyframes blink-fast { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+  .orb-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0 16px;
+  }
+
+  .orb-wrapper {
+    position: relative;
+    width: 120px; height: 120px;
+  }
+
+  .orb {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%,
+      rgba(0,245,255,0.3), rgba(0,100,150,0.15), transparent 70%);
+    border: 1px solid rgba(0,245,255,0.3);
+    box-shadow: 0 0 30px rgba(0,245,255,0.2), inset 0 0 30px rgba(0,245,255,0.05);
+    animation: orb-idle 4s ease-in-out infinite;
+  }
+
+  .orb.listening {
+    animation: orb-listen 0.8s ease-in-out infinite;
+    border-color: var(--cyan);
+    box-shadow: 0 0 50px rgba(0,245,255,0.5), inset 0 0 30px rgba(0,245,255,0.1);
+  }
+
+  .orb.thinking {
+    animation: orb-think 1.5s linear infinite;
+  }
+
+  /* ✅ NEW — speaking animation */
+  .orb.speaking {
+    animation: orb-speak 0.6s ease-in-out infinite;
+    border-color: #aa00ff;
+    box-shadow: 0 0 50px rgba(170,0,255,0.5), inset 0 0 30px rgba(170,0,255,0.1);
+  }
+
+  @keyframes orb-idle {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @keyframes orb-listen {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+
+  @keyframes orb-think {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes orb-speak {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(170,0,255,0.4); }
+    50% { transform: scale(1.1); box-shadow: 0 0 60px rgba(170,0,255,0.7); }
+  }
+
+  .orb-ring {
+    position: absolute;
+    inset: -12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,245,255,0.15);
+    animation: ring-rotate 8s linear infinite;
+  }
+
+  .orb-ring::before {
+    content: '';
+    position: absolute;
+    top: -3px; left: 50%;
+    width: 6px; height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--cyan);
+    transform: translateX(-50%);
+  }
+
+  .orb-ring-2 {
+    position: absolute;
+    inset: -24px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,245,255,0.08);
+    animation: ring-rotate 12s linear infinite reverse;
+  }
+
+  @keyframes ring-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 320px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .chat-area::-webkit-scrollbar { width: 3px; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .message {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    animation: msg-appear 0.3s ease;
+  }
+
+  @keyframes msg-appear {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { align-items: flex-end; }
+  .message.alice { align-items: flex-start; }
+
+  .msg-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    font-family: 'Orbitron', monospace;
+  }
+
+  .msg-bubble {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 2px;
+    font-size: 14px;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .message.user .msg-bubble {
+    background: rgba(0,245,255,0.08);
+    border: 1px solid rgba(0,245,255,0.25);
+    border-right: 3px solid var(--cyan);
+  }
+
+  .message.alice .msg-bubble {
+    background: rgba(0,245,255,0.04);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-left: 3px solid rgba(0,245,255,0.5);
+  }
+
+  /* ✅ Tap to replay button */
+  .replay-btn {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 0;
+    font-family: 'Rajdhani', sans-serif;
+    text-transform: uppercase;
+  }
+
+  .replay-btn:hover { color: var(--cyan); }
+
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    padding: 14px;
+    align-items: center;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px;
+    background: var(--cyan);
+    border-radius: 50%;
+    animation: typing 1.2s ease-in-out infinite;
+  }
+
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 8px 0;
+  }
+
+  .input-area { padding: 12px 0 8px; }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .input-box {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-bottom: 2px solid rgba(0,245,255,0.4);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    resize: none;
+    border-radius: 2px;
+    transition: all 0.2s;
+    max-height: 100px;
+    min-height: 46px;
+  }
+
+  .input-box::placeholder { color: var(--text-dim); }
+
+  .input-box:focus {
+    border-color: var(--cyan);
+    background: rgba(0,245,255,0.06);
+    box-shadow: 0 0 20px rgba(0,245,255,0.1);
+  }
+
+  .btn-send {
+    width: 46px; height: 46px;
+    background: rgba(0,245,255,0.1);
+    border: 1px solid var(--border);
+    color: var(--cyan);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-send:hover {
+    background: rgba(0,245,255,0.2);
+    border-color: var(--cyan);
+    box-shadow: 0 0 15px rgba(0,245,255,0.2);
+  }
+
+  .btn-send svg { width: 18px; height: 18px; }
+
+  .btn-voice {
+    width: 100%;
+    height: 50px;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    border-radius: 2px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-voice:hover {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0,245,255,0.15);
+  }
+
+  .btn-voice.recording {
+    border-color: var(--red);
+    color: var(--red);
+    box-shadow: 0 0 20px rgba(255,51,102,0.3);
+    animation: recording-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes recording-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,51,102,0.3); }
+    50% { box-shadow: 0 0 40px rgba(255,51,102,0.6); }
+  }
+
+  /* ✅ Mute button */
+  .btn-mute {
+    width: 100%;
+    height: 38px;
+    margin-top: 8px;
+    background: transparent;
+    border: 1px solid rgba(170,0,255,0.3);
+    color: rgba(170,0,255,0.7);
+    cursor: pointer;
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-radius: 2px;
+    transition: all 0.3s;
+  }
+
+  .btn-mute.muted {
+    border-color: var(--text-dim);
+    color: var(--text-dim);
+  }
+
+  .corner {
+    position: fixed;
+    width: 30px; height: 30px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .corner-tl { top: 16px; left: 16px; border-top: 1px solid var(--cyan-dim); border-left: 1px solid var(--cyan-dim); }
+  .corner-tr { top: 16px; right: 16px; border-top: 1px solid var(--cyan-dim); border-right: 1px solid var(--cyan-dim); }
+  .corner-bl { bottom: 16px; left: 16px; border-bottom: 1px solid var(--cyan-dim); border-left: 1px solid var(--cyan-dim); }
+  .corner-br { bottom: 16px; right: 16px; border-bottom: 1px solid var(--cyan-dim); border-right: 1px solid var(--cyan-dim); }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-dim);
+    font-size: 13px;
+    letter-spacing: 2px;
+    line-height: 2;
+  }
+</style>
+</head>
+<body>
+
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<div class="container">
+
+  <div class="header">
+    <div class="logo">ALICE</div>
+    <div class="subtitle">Personal Intelligence System</div>
+    <div class="header-line"></div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">SYSTEM ONLINE</span>
+  </div>
+
+  <div class="orb-container">
+    <div class="orb-wrapper">
+      <div class="orb-ring-2"></div>
+      <div class="orb-ring"></div>
+      <div class="orb" id="orb"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="empty-state" id="emptyState">
+      AWAITING INPUT<br>
+      <span style="font-size:11px; opacity:0.5">Type or speak to Alice</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea
+        class="input-box"
+        id="inputBox"
+        placeholder="Ask Alice anything..."
+        rows="1"
+      ></textarea>
+      <button class="btn-send" id="sendBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+
+    <button class="btn-voice" id="voiceBtn">🎙 HOLD TO SPEAK</button>
+    <button class="btn-mute" id="muteBtn">🔊 VOICE REPLY ON</button>
+  </div>
+
+</div>
+
+<script>
+  const chatArea   = document.getElementById('chatArea');
+  const inputBox   = document.getElementById('inputBox');
+  const sendBtn    = document.getElementById('sendBtn');
+  const voiceBtn   = document.getElementById('voiceBtn');
+  const muteBtn    = document.getElementById('muteBtn');
+  const statusDot  = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const orb        = document.getElementById('orb');
+  const emptyState = document.getElementById('emptyState');
+
+  let isThinking = false;
+  let isMuted    = false;
+  let recognition = null;
+
+  // ── Status Helper ──
+  function setStatus(state) {
+    statusDot.className = 'status-dot';
+    orb.className = 'orb';
+
+    if (state === 'online') {
+      statusText.textContent = 'SYSTEM ONLINE';
+    } else if (state === 'listening') {
+      statusDot.classList.add('thinking');
+      orb.classList.add('listening');
+      statusText.textContent = 'LISTENING...';
+    } else if (state === 'thinking') {
+      statusDot.classList.add('thinking');
+      orb.classList.add('thinking');
+      statusText.textContent = 'PROCESSING...';
+    } else if (state === 'speaking') {
+      // ✅ New speaking state
+      statusDot.classList.add('speaking');
+      orb.classList.add('speaking');
+      statusText.textContent = 'ALICE SPEAKING...';
+    } else if (state === 'error') {
+      statusDot.classList.add('error');
+      statusText.textContent = 'CONNECTION ERROR';
+    }
+  }
+
+  // ── ✅ Text to Speech ──
+  function speakReply(text) {
+    if (isMuted) return;
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang  = 'en-IN';   // Indian English accent
+    utterance.rate  = 0.92;      // slightly slower — clearer
+    utterance.pitch = 1.05;      // slightly higher — more feminine
+    utterance.volume = 1.0;
+
+    // Pick best available voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      v.name.includes('Samantha') ||
+      v.name.includes('Google UK English Female') ||
+      v.name.includes('Female') ||
+      v.lang.includes('en')
+    );
+    if (preferred) utterance.voice = preferred;
+
+    // Status changes
+    utterance.onstart = () => setStatus('speaking');
+    utterance.onend   = () => setStatus('online');
+    utterance.onerror = () => setStatus('online');
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // ── Add Message ──
+  function addMessage(role, text) {
+    if (emptyState) emptyState.remove();
+
+    const msg = document.createElement('div');
+    msg.className = `message ${role}`;
+
+    const label = document.createElement('div');
+    label.className = 'msg-label';
+    label.textContent = role === 'user' ? 'YOU' : 'ALICE';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+
+    msg.appendChild(label);
+    msg.appendChild(bubble);
+
+    // ✅ Add replay button under Alice messages
+    if (role === 'alice') {
+      const replay = document.createElement('button');
+      replay.className = 'replay-btn';
+      replay.textContent = '🔁 Replay';
+      replay.onclick = () => speakReply(text);
+      msg.appendChild(replay);
+    }
+
+    chatArea.appendChild(msg);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  // ── Typing Indicator ──
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'message alice';
+    div.id = 'typingIndicator';
+    div.innerHTML = `
+      <div class="msg-label">ALICE</div>
+      <div class="msg-bubble">
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>`;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  function hideTyping() {
+    const t = document.getElementById('typingIndicator');
+    if (t) t.remove();
+  }
+
+  // ── Send Message ──
+  async function sendMessage(text) {
+    if (!text.trim() || isThinking) return;
+
+    isThinking = true;
+    addMessage('user', text);
+    inputBox.value = '';
+    inputBox.style.height = 'auto';
+
+    setStatus('thinking');
+    showTyping();
+
+    try {
+      const response = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: text })
+      });
+
+      const data = await response.json();
+      hideTyping();
+      addMessage('alice', data.answer);
+
+      // ✅ Speak the reply!
+      speakReply(data.answer);
+
+    } catch (err) {
+      hideTyping();
+      const errMsg = 'Connection error sir. Please make sure Alice server is running.';
+      addMessage('alice', errMsg);
+      speakReply(errMsg);
+      setStatus('error');
+      setTimeout(() => setStatus('online'), 3000);
+    }
+
+    isThinking = false;
+  }
+
+  // ── Send Button ──
+  sendBtn.addEventListener('click', () => sendMessage(inputBox.value));
+
+  // ── Enter to send ──
+  inputBox.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(inputBox.value);
+    }
+  });
+
+  // ── Auto resize textarea ──
+  inputBox.addEventListener('input', () => {
+    inputBox.style.height = 'auto';
+    inputBox.style.height = Math.min(inputBox.scrollHeight, 100) + 'px';
+  });
+
+  // ── ✅ Mute Toggle ──
+  muteBtn.addEventListener('click', () => {
+    isMuted = !isMuted;
+    if (isMuted) {
+      window.speechSynthesis.cancel();
+      muteBtn.textContent = '🔇 VOICE REPLY OFF';
+      muteBtn.classList.add('muted');
+    } else {
+      muteBtn.textContent = '🔊 VOICE REPLY ON';
+      muteBtn.classList.remove('muted');
+    }
+  });
+
+  // ── Voice Input ──
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-IN';
+
+    recognition.onstart = () => {
+      voiceBtn.textContent = '🔴 RECORDING — RELEASE TO SEND';
+      voiceBtn.classList.add('recording');
+      setStatus('listening');
+      // Stop any ongoing speech when user starts talking
+      window.speechSynthesis.cancel();
+    };
+
+    recognition.onresult = (e) => {
+      const transcript = e.results[0][0].transcript;
+      inputBox.value = transcript;
+      sendMessage(transcript);
+    };
+
+    recognition.onend = () => {
+      voiceBtn.textContent = '🎙 HOLD TO SPEAK';
+      voiceBtn.classList.remove('recording');
+    };
+
+    recognition.onerror = () => {
+      voiceBtn.textContent = '🎙 HOLD TO SPEAK';
+      voiceBtn.classList.remove('recording');
+      setStatus('online');
+    };
+
+    voiceBtn.addEventListener('mousedown', () => recognition.start());
+    voiceBtn.addEventListener('touchstart', (e) => { e.preventDefault(); recognition.start(); });
+    voiceBtn.addEventListener('mouseup', () => recognition.stop());
+    voiceBtn.addEventListener('touchend', (e) => { e.preventDefault(); recognition.stop(); });
+
+  } else {
+    voiceBtn.textContent = 'VOICE NOT SUPPORTED — USE CHROME';
+    voiceBtn.disabled = true;
+  }
+
+  // ── Load voices on startup ──
+  // Some browsers need this to load voices
+  window.speechSynthesis.onvoiceschanged = () => {
+    window.speechSynthesis.getVoices();
+  };
+</script>
+</body>
+</html>
